@@ -1,3 +1,4 @@
+const authorization = require('./middleware/authorization');
 const bodyParser = require('body-parser');
 const express = require('express');
 const morgan = require('morgan');
@@ -5,7 +6,8 @@ const uuid = require('uuid');
 
 const app = express();
 const jsonParser = bodyParser.json();
-app.use(morgan('dev'))
+app.use(morgan('dev'));
+app.use(authorization);
 
 function createBookmark(title, description, url, rating) {
   return {

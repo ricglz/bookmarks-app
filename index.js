@@ -26,7 +26,7 @@ const bookmarks = [
 ]
 
 app.get('/bookmarks', (_, res) => (
-  res.status(200).json(bookmarks);
+  res.status(200).json(bookmarks)
 ));
 
 function errorMessage(res, statusMessage, status) {
@@ -71,7 +71,7 @@ app.post('/bookmarks', (req, res) => {
 });
 
 app.delete('/bookmark/:id', (req, res) => {
-  const id = Number(req.params.id);
+  const { id } = req.params;
   const index = bookmarks.findIndex((bookmark) => bookmark.id === id);
   if(index < 0) {
     return notFoundErrorMessage(res, 'id');
@@ -82,12 +82,12 @@ app.delete('/bookmark/:id', (req, res) => {
 
 app.patch('/bookmark/:id', (req, res) => {
   const { query, params } = req;
-  const idQuery = query.id;
-  if(!idQuery) {
+  const { id } = query;
+  if(!id) {
     return parameterMissingError(res, 'ID');
   }
   const idParams = params.id;
-  if(Number(idQuery) !== Number(idParams)) {
+  if(id !== idParams) {
     return errorMessage(res, 'Path id and body id are not the same', 409);
   }
   const index = bookmarks.findIndex((bookmark) => bookmark.id === id);
@@ -100,4 +100,8 @@ app.patch('/bookmark/:id', (req, res) => {
   })
   bookmarks[index] = bookmark;
   return res.status(202).json(bookmark);
+});
+
+app.listen(8080, () => {
+  console.log("This server is running on port 8080");
 });

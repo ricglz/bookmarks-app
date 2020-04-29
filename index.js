@@ -1,15 +1,17 @@
 const authorization = require('./middleware/authorization');
 const bodyParser = require('body-parser');
 const express = require('express');
+const mongoose = require('mongoose');
 const morgan = require('morgan');
 const uuid = require('uuid');
+const { Bookmarks } = require('./models/bookmarks')
 
 const app = express();
 const jsonParser = bodyParser.json();
 app.use(morgan('dev'));
 app.use(authorization);
 
-function createBookmark(title, description, url, rating) {
+function createBookmark({ title, description, url, rating }) {
   return {
     id: uuid.v4(),
     title,
@@ -18,16 +20,6 @@ function createBookmark(title, description, url, rating) {
     rating
   };
 }
-
-const bookmarks = [
-  createBookmark('Hola', 'Mundo', 'http://google.com', 4),
-  createBookmark('Que', 'Tal?', 'http://facebook.com', 5),
-  createBookmark('Adiós', 'Mundo', 'http://twitter.com', 4),
-]
-
-app.get('/bookmarks', (_, res) => (
-  res.status(200).json(bookmarks)
-));
 
 function errorMessage(res, statusMessage, status) {
   res.statusMessage = statusMessage;
@@ -43,65 +35,103 @@ function parameterMissingError(res, field) {
   return errorMessage(res, `Parameter missing: ${field} was not sent`, 406);
 }
 
-app.get('/bookmark', (req, res) => {
+function databaseError(res, error) {
+  return errorMessage(res, `Something is wrong with the database: ${error}`, 500)
+}
+
+app.get('/bookmarks', async (_, res) => {
+  try {
+    const result = await Bookmarks.getAllBookmarks();
+    return res.status(200).json(result);
+  } catch (err) {
+    return databaseError(res, err);
+  }
+});
+
+app.get('/bookmark', async (req, res) => {
   const { title } = req.query;
   if (!title) {
     return parameterMissingError(res, 'Title');
   }
-  const bookmarksAnswer = bookmarks.filter((bookmark) => bookmark.title === title);
-  if (bookmarksAnswer.length === 0) {
-    return notFoundErrorMessage(res, 'title');
+  try {
+    const bookmarksAnswer = await Bookmarks.getBookmarksByTitle(title);
+    if (bookmarksAnswer.length === 0) {
+      return notFoundErrorMessage(res, 'title');
+    }
+    return res.status(200).json(bookmarksAnswer);
+  } catch (err) {
+    return databaseError(res, err);
   }
-  return res.status(200).json(bookmarksAnswer);
 });
 
-app.post('/bookmarks', jsonParser, (req, res) => {
+app.post('/bookmarks', jsonParser, async (req, res) => {
   const fields = ['title', 'description', 'url', 'rating'];
   const { body } = req;
   for (let i = 0; i < 4; i++) {
     const searchedField = fields[i];
-    if (!body.hasOwnProperty(searchedField)) {
+    if (!Object.prototype.hasOwnProperty.call(body, searchedField)) {
       return parameterMissingError(res, searchedField);
     }
   }
-  const { title, description, url, rating } = body;
-  const bookmark = createBookmark(title, description, url, rating);
-  bookmarks.push(bookmark);
-  return res.status(201).json(bookmark);
-});
-
-app.delete('/bookmark/:id', (req, res) => {
-  const { id } = req.params;
-  const index = bookmarks.findIndex((bookmark) => bookmark.id === id);
-  if (index < 0) {
-    return notFoundErrorMessage(res, 'id');
+  const bookmark = createBookmark(body);
+  try {
+    const result = await Bookmarks.createBookmark(bookmark);
+    return res.status(201).json(result);
+  } catch (err) {
+    return databaseError(res, err);
   }
-  bookmarks.splice(index, 1);
-  return res.status(200).end();
 });
 
-app.patch('/bookmark/:id', jsonParser, (req, res) => {
+app.delete('/bookmark/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await Bookmarks.deleteBookmark(id);
+    if(result == null) {
+      return notFoundErrorMessage(res, 'id')
+    }
+    return res.status(200).end();
+  } catch (err) {
+    return databaseError(res, err);
+  }
+});
+
+app.patch('/bookmark/:id', jsonParser, async (req, res) => {
   const { body, params } = req;
-  const { id } = body;
+  const { id, ...toUpdate } = body;
   if (!id) {
     return parameterMissingError(res, 'ID');
   }
   const idParams = params.id;
   if (id !== idParams) {
-    return errorMessage(res, 'Path id and body id are not the same', 409);
+    return errorMessage(res, 'Params id and body id are not the same', 409);
   }
-  const index = bookmarks.findIndex((bookmark) => bookmark.id === id);
-  if (index < 0) {
-    return notFoundErrorMessage(res, 'id');
+  try {
+    const result = await Bookmarks.updateBookmark(id, toUpdate);
+    return res.status(202).json(result);
+  } catch (err) {
+    return databaseError(res, err);
   }
-  const bookmark = bookmarks[index];
-  ['title', 'description', 'url', 'rating'].forEach((field) => {
-    bookmark[field] = body[field] || bookmark[field];
-  })
-  bookmarks[index] = bookmark;
-  return res.status(202).json(bookmark);
 });
 
 app.listen(8080, () => {
   console.log("This server is running on port 8080");
+  new Promise(( resolve, reject ) => {
+    const settings = {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useCreateIndex: true,
+      useFindAndModify: false
+    };
+    mongoose.connect('mongodb://localhost/bookmarksdb', settings, ( err ) => {
+      if( err ){
+        return reject( err );
+      }
+      else{
+        console.log( "Database connected successfully." );
+        return resolve();
+      }
+    });
+  }).catch(err => {
+    console.log( err );
+  });
 });

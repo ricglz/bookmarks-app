@@ -45,26 +45,26 @@ function parameterMissingError(res, field) {
 
 app.get('/bookmark', (req, res) => {
   const { title } = req.query;
-  if(!title) {
+  if (!title) {
     return parameterMissingError(res, 'Title');
   }
   const bookmarksAnswer = bookmarks.filter((bookmark) => bookmark.title === title);
-  if(bookmarksAnswer.length === 0) {
+  if (bookmarksAnswer.length === 0) {
     return notFoundErrorMessage(res, 'title');
   }
   return res.status(200).json(bookmarksAnswer);
 });
 
-app.post('/bookmarks', (req, res) => {
+app.post('/bookmarks', jsonParser, (req, res) => {
   const fields = ['title', 'description', 'url', 'rating'];
-  const { query } = req;
-  for(let i = 0; i < 4; i++) {
-    const searchedField = fields[i], field = query[searchedField];
-    if(!field) {
+  const { body } = req;
+  for (let i = 0; i < 4; i++) {
+    const searchedField = fields[i];
+    if (!body.hasOwnProperty(searchedField)) {
       return parameterMissingError(res, searchedField);
     }
   }
-  const { title, description, url, rating } = query;
+  const { title, description, url, rating } = body;
   const bookmark = createBookmark(title, description, url, rating);
   bookmarks.push(bookmark);
   return res.status(201).json(bookmark);
@@ -73,30 +73,30 @@ app.post('/bookmarks', (req, res) => {
 app.delete('/bookmark/:id', (req, res) => {
   const { id } = req.params;
   const index = bookmarks.findIndex((bookmark) => bookmark.id === id);
-  if(index < 0) {
+  if (index < 0) {
     return notFoundErrorMessage(res, 'id');
   }
   bookmarks.splice(index, 1);
   return res.status(200).end();
 });
 
-app.patch('/bookmark/:id', (req, res) => {
-  const { query, params } = req;
-  const { id } = query;
-  if(!id) {
+app.patch('/bookmark/:id', jsonParser, (req, res) => {
+  const { body, params } = req;
+  const { id } = body;
+  if (!id) {
     return parameterMissingError(res, 'ID');
   }
   const idParams = params.id;
-  if(id !== idParams) {
+  if (id !== idParams) {
     return errorMessage(res, 'Path id and body id are not the same', 409);
   }
   const index = bookmarks.findIndex((bookmark) => bookmark.id === id);
-  if(index < 0) {
+  if (index < 0) {
     return notFoundErrorMessage(res, 'id');
   }
   const bookmark = bookmarks[index];
   ['title', 'description', 'url', 'rating'].forEach((field) => {
-    bookmark[field] = query[field] || bookmark[field];
+    bookmark[field] = body[field] || bookmark[field];
   })
   bookmarks[index] = bookmark;
   return res.status(202).json(bookmark);

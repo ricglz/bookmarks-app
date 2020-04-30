@@ -31,25 +31,25 @@ const Bookmarks = {
     try {
       return await bookmarksCollection.create(bookmark);
     } catch (error) {
-      return error;
+      throw new Error(error);
     }
   }, getAllBookmarks: async () => {
     try {
       return await bookmarksCollection.find();
     } catch (error) {
-      return error;
+      throw new Error(error);
     }
   }, getBookmarksByTitle: async (title) => {
     try {
       return await bookmarksCollection.find({ title });
     } catch (error) {
-      return error;
+      throw new Error(error);
     }
   }, deleteBookmark: async (id) => {
     try {
       return await bookmarksCollection.findOneAndDelete({ id });
     } catch (error) {
-      return error;
+      throw new Error(error);
     }
   }, updateBookmark: async (id, toUpdate) => {
     try {
@@ -57,7 +57,7 @@ const Bookmarks = {
         { id }, toUpdate, { new: true }
       );
     } catch (error) {
-      return error;
+      throw new Error(error);
     }
   }
 }

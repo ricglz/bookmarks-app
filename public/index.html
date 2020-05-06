@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Bookmarks app</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" type="text/css" href="./css/index.css"/>
+    <script defer src="./js/index.js"></script>
+  </head>
+  <body>
+    <section>
+      <h4>Create bookmark form</h4>
+      <form class="create-bookmark">
+        <label for="title">Title:</label>
+        <input type="text" id="title" />
+        <label for="description">Description:</label>
+        <input type="text" id="description" />
+        <label for="url">Url:</label>
+        <input type="text" id="url" />
+        <label for="rating">Rating:</label>
+        <input type="number" id="rating" />
+        <button id="submit-btn" type="submit"></button>
+      </form>
+    </section>
+    <section>
+      <h4>Delete bookmark form</h4>
+      <form class="delete-bookmark">
+        <label for="id">Id:</label>
+        <input type="text" id="id" />
+        <button id="submit-btn" type="submit"></button>
+      </form>
+    </section>
+    <section>
+      <h4>Update bookmark form</h4>
+      <form class="update-bookmark">
+        <label for="id">Id:</label>
+        <input type="text" id="id" />
+        <label for="title">Title:</label>
+        <input type="text" id="title" />
+        <label for="description">Description:</label>
+        <input type="text" id="description" />
+        <label for="url">Url:</label>
+        <input type="text" id="url" />
+        <label for="rating">Rating:</label>
+        <input type="number" id="rating" />
+        <button id="submit-btn" type="submit"></button>
+      </form>
+    </section>
+    <section>
+      <h4>Get bookmark form</h4>
+      <form class="get-bookmark">
+        <label for="id">Id:</label>
+        <input type="text" id="id" />
+        <label for="title">Title:</label>
+        <input type="text" id="title" />
+        <button id="submit-btn" type="submit"></button>
+      </form>
+    </section>
+    <section class="results"></section>
+  </body>
+</html>

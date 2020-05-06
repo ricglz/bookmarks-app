@@ -8,6 +8,7 @@ const { Bookmarks } = require('./models/bookmarks')
 
 const app = express();
 const jsonParser = bodyParser.json();
+app.use(express.static('public'));
 app.use(morgan('dev'));
 app.use(authorization);
 

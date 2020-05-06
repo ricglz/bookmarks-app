@@ -6,6 +6,8 @@ const morgan = require('morgan');
 const uuid = require('uuid');
 const { Bookmarks } = require('./models/bookmarks')
 
+require('dotenv').config()
+
 const app = express();
 const jsonParser = bodyParser.json();
 app.use(express.static('public'));
@@ -114,7 +116,9 @@ app.patch('/bookmark/:id', jsonParser, async (req, res) => {
   }
 });
 
-app.listen(8080, () => {
+const { PORT, MONGODB_USER, MONGODB_PASSWORD } = process.env;
+
+app.listen(PORT, () => {
   console.log("This server is running on port 8080");
   new Promise(( resolve, reject ) => {
     const settings = {
@@ -123,7 +127,10 @@ app.listen(8080, () => {
       useCreateIndex: true,
       useFindAndModify: false
     };
-    mongoose.connect('mongodb://localhost/bookmarksdb', settings, ( err ) => {
+    const user = MONGODB_USER;
+    const pass = MONGODB_PASSWORD;
+    const uri = `mongodb+srv://${user}:${pass}@cluster0-ieahj.gcp.mongodb.net/test?retryWrites=true&w=majority`
+    mongoose.connect(uri, settings, ( err ) => {
       if( err ){
         return reject( err );
       }
